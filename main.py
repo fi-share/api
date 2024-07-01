@@ -1,5 +1,5 @@
 from flask import Flask
-from models import db
+from models import db, Materias, Cursos, Tps, Repositorios
 from config import Config
 
 app = Flask(__name__)
