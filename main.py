@@ -15,8 +15,8 @@ def home():
     return "Hello World"
 
 
-@app.route('/authenticate', methods=['POST'])
-def authenticate():
+@app.route('/exchange-code', methods=['POST'])
+def exchange_code():
     try:
         if 'code' not in request.json:
                 return jsonify({'error': 'Falta el parametro "code"'}), 400
