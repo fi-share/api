@@ -64,6 +64,34 @@ def get_materias():
 
 
 """
+PRE: Se espera un id de la tabla materia válido
+POST: Devuelve un JSON con los datos de la materia y sus cursos asociados
+"""
+
+
+@app.route('/materias/<int:id_materia>', methods=['GET'])
+def get_materia_cursos(id_materia):
+    try:
+        materia = Materias.query.get(id_materia)
+        if materia is None:
+            abort(404, description="Resource not found")
+
+        cursos_data = [{'id': curso.id, 'nombre': curso.nombre} for curso in materia.cursos]
+
+        materia_data = {
+            'id': materia.id,
+            'nombre': materia.nombre,
+            'cuatrimestre': materia.cuatrimestre,
+            'anio': materia.anio,
+            'cursos': cursos_data
+        }
+
+        return jsonify({'materia': materia_data})
+    except Exception:
+        abort(500, description="Internal Server Error")
+
+
+"""
 PRE: Se espera un id valido de la tabla cursos
 
 POST: Devuelve un JSON con todos los datos de la tabla cursos con el id dado incluyendo los tps asociados
@@ -93,6 +121,6 @@ def get_curso_tps(id_curso):
 if __name__ == "__main__":
     print("Starting server...")
     with app.app_context():
-        db.create_all() # Considerar Flask Migrate para produccion
+        db.create_all()  # Considerar Flask Migrate para produccion
     app.run(debug=True)
     print("Started")
