@@ -1,5 +1,5 @@
-from flask import Flask, jsonify
-from models import db, Materias, Cursos
+from flask import Flask, jsonify, abort
+from models import db, Materias, Cursos, Tps
 from config import Config
 
 
@@ -7,6 +7,16 @@ app = Flask(__name__)
 
 app.config.from_object(Config)
 db.init_app(app)
+
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return jsonify(error=str(e)), 500
+
+
+@app.errorhandler(404)
+def resource_not_found(e):
+    return jsonify(error=str(e)), 404
 
 
 @app.route("/")
@@ -30,7 +40,7 @@ POST: Devuelve un JSON con todos los datos de la tabla materias en db
 @app.route('/materias', methods=['GET'])
 def get_materias():
     try:
-        materias = Materias.query.limit(10).all()
+        materias = Materias.query.all()
         materias_data = []
         for materia in materias:
             materia_data = {
@@ -49,39 +59,35 @@ def get_materias():
                 materia_data['cursos'].append(curso_data)
             materias_data.append(materia_data)
         return jsonify({'materias': materias_data})
-    except Exception as error:
-        print("Error: ", error)
-        return jsonify({'error': 'Internal Server Error'}), 500
+    except Exception:
+        abort(500, description="Internal Server Error")
 
 
 """
-PRE: Se espera un JSON con la siguiente estructura de la tabla Cursos en db:
-{
-    "id": numero_id,
-    "nombre": "nombre del curso",
-    "id_materia": numero_id,
-    "tps": ["id": numero_id, "nombre": "nombre del tp"]
-}
-POST: Devuelve un JSON con todos los datos de la tabla cursos en db
+PRE: Se espera un id valido de la tabla cursos
+
+POST: Devuelve un JSON con todos los datos de la tabla cursos con el id dado incluyendo los tps asociados
 """
 
 
-@app.route('/cursos', methods=['GET'])
-def get_cursos():
+@app.route('/cursos/<int:id_curso>', methods=['GET'])
+def get_curso_tps(id_curso):
 
     try:
-        cursos = Cursos.query.limit(10).all()
-        cursos_data = []
-        for curso in cursos:
-            curso_data = {
-                'id': curso.id,
-                'nombre': curso.nombre
-            }
-            cursos_data.append(curso_data)
-        return jsonify({'cursos': cursos_data})
-    except Exception as error:
-        print("Error: ", error)
-        return jsonify({'error': 'Internal Server Error'}), 500
+        curso = Cursos.query.get(id_curso)
+        if curso is None:
+            abort(404, description="Resource not found")
+
+        tps_data = [{'id': tp.id, 'nombre': tp.nombre, 'descripcion': tp.descripcion} for tp in curso.tps]
+
+        curso_data = {
+            'id': curso.id,
+            'nombre': curso.nombre,
+            'tps': tps_data
+        }
+        return jsonify({'curso': curso_data})
+    except Exception:
+        abort(500, description="Internal Server Error")
 
 
 if __name__ == "__main__":
