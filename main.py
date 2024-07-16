@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, abort
-from models import db, Materias, Cursos, Tps
+from models import db, Materias, Cursos, Tps, Repositorios
 from config import Config
 
 
@@ -114,6 +114,34 @@ def get_curso_tps(id_curso):
             'tps': tps_data
         }
         return jsonify({'curso': curso_data})
+    except Exception:
+        abort(500, description="Internal Server Error")
+
+
+"""   
+PRE: Se espera un id de TP válido
+POST: Devuelve un JSON con los datos del TP y sus repositorios asociados
+"""
+
+
+@app.route('/tps/<int:id_tp>', methods=['GET'])
+def get_tp_repositorios(id_tp):
+    try:
+        tp = Tps.query.get(id_tp)
+        if tp is None:
+            abort(404, description="Resource not found")
+
+        repositorios_data = [{'id': repo.id, 'full_name': repo.full_name, 'descripcion': repo.descripcion,
+                              'calificacion': repo.calificacion, 'id_usuario': repo.id_usuario,
+                              'fecha_creacion': repo.fecha_creacion.isoformat()} for repo in tp.repositorios]
+        tp_data = {
+            'id': tp.id,
+            'nombre': tp.nombre,
+            'descripcion': tp.descripcion,
+            'repositorios': repositorios_data
+        }
+
+        return jsonify({'tp': tp_data})
     except Exception:
         abort(500, description="Internal Server Error")
 
