@@ -203,7 +203,7 @@ def get_tp_repositorios(id_tp):
 
         }
 
-        return jsonify({'tp': tp_data})
+        return jsonify(tp_data)
     except Exception:
         abort(500, description="Internal Server Error")
 
