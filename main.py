@@ -1,10 +1,13 @@
 from flask import Flask, jsonify, abort, request
+from flask_cors import CORS
 from models import db, Materias, Cursos, Tps, Repositorios
 from datetime import datetime
 from config import Config
-
+import requests
 
 app = Flask(__name__)
+
+CORS(app)
 
 app.config.from_object(Config)
 db.init_app(app)
@@ -29,6 +32,27 @@ def resource_not_found(e):
 def home():
     return "Hello World"
 
+
+@app.route('/exchange-code', methods=['POST'])
+def exchange_code():
+    try:
+        if 'code' not in request.json:
+                return jsonify({'error': 'Falta el parametro "code"'}), 400
+        
+        token_response = requests.post('https://github.com/login/oauth/access_token', data={
+            'client_id': app.config["GITHUB_CLIENT_ID"],
+            'client_secret': app.config["GITHUB_CLIENT_SECRET"],
+            'code': request.json['code'],
+            'redirect_uri': request.json['redirect_uri']
+        }, headers={'Accept': 'application/json'})
+
+        if token_response.status_code != 200:
+            return jsonify({'error': 'Error de github'}), token_response.status_code
+
+        token_response_json = token_response.json()
+        return jsonify(token_response_json)
+    except Exception as err:
+        return jsonify({'error': str(err)}), 500
 
 """
 PRE: Se espera un JSON con la siguiente estructura de la tabla Materia en db:
