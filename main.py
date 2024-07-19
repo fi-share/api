@@ -4,6 +4,7 @@ from models import db, Materias, Cursos, Tps, Repositorios
 from datetime import datetime
 from config import Config
 import requests
+import markdown
 
 app = Flask(__name__)
 
@@ -183,10 +184,13 @@ def get_tp_repositorios(id_tp):
         repositorios_data = [{'id': repo.id, 'full_name': repo.full_name, 'descripcion': repo.descripcion,
                               'calificacion': repo.calificacion, 'id_usuario': repo.id_usuario,
                               'fecha_creacion': repo.fecha_creacion.isoformat()} for repo in tp.repositorios]
+
+        descripcion_html = markdown.markdown(tp.descripcion)
+
         tp_data = {
             'id': tp.id,
             'nombre': tp.nombre,
-            'descripcion': tp.descripcion,
+            'descripcion': descripcion_html,
             'repositorios': repositorios_data,
             'curso': {
                 'id': curso.id,
