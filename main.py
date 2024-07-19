@@ -270,7 +270,7 @@ POST: Devuelve un JSON con los datos actualizados del repositorio o un mensaje d
 """
 
 
-@app.route('/tps/<int:id_tp>/repositorios/<int:id_repositorio>', methods=['PATCH', 'DELETE'])
+@app.route('/tps/<int:id_tp>/repositorios/<int:id_repositorio>', methods=['GET', 'PUT', 'PATCH', 'DELETE'])
 def up_and_delete_repository(id_tp, id_repositorio):
 
     try:
@@ -282,26 +282,59 @@ def up_and_delete_repository(id_tp, id_repositorio):
         if repositorio is None:
             abort(404, description="Resource not found")
 
-        if request.method == 'DELETE':
-            db.session.delete(repositorio)
-            db.session.commit()
+        if request.method == 'GET':
+            response_data = {
+                'id': repositorio.id,
+                'full_name': repositorio.full_name,
+                'descripcion': repositorio.descripcion,
+                'calificacion': repositorio.calificacion,
+                'id_usuario': repositorio.id_usuario,
+                'fecha_creacion': repositorio.fecha_creacion.isoformat(),
+                'id_tp': repositorio.id_tp
+            }
+            return jsonify(response_data), 200
 
-            return jsonify({'message': f'Repositorio con ID {id_repositorio} eliminado exitosamente'}), 200
+        elif request.method == 'PUT':
+            data = request.json
+            if not data:
+                abort(400, description="Bad Request")
 
-        data = request.json
-        if not data:
-            abort(400, description="Bad Requests")
+            required_fields = ['full_name', 'descripcion', 'calificacion', 'id_usuario']
+            for field in required_fields:
+                if field not in data:
+                    abort(400, description=f"Missing required field: {field}")
 
-        if 'full_name' in data:
+            # no actualizamos fecha_creacion ni id_tp
             repositorio.full_name = data['full_name']
-        if 'descripcion' in data:
             repositorio.descripcion = data['descripcion']
-        if 'calificacion' in data:
             repositorio.calificacion = data['calificacion']
-        if 'id_usuario' in data:
             repositorio.id_usuario = data['id_usuario']
 
-        db.session.commit()
+            db.session.commit()
+
+        elif request.method == 'PATCH':
+            data = request.json
+            if not data:
+                abort(400, description="Bad Request")
+
+            if 'full_name' in data:
+                repositorio.full_name = data['full_name']
+            if 'descripcion' in data:
+                repositorio.descripcion = data['descripcion']
+            if 'calificacion' in data:
+                repositorio.calificacion = data['calificacion']
+            if 'id_usuario' in data:
+                repositorio.id_usuario = data['id_usuario']
+
+            db.session.commit()
+
+        elif request.method == 'DELETE':
+            db.session.delete(repositorio)
+            db.session.commit()
+            return jsonify({'message': f'Sucess: {id_repositorio} was deleted'}), 200
+
+        else:
+            abort(400, description="Bad Request")
 
         response_data = {
             'id': repositorio.id,
@@ -318,6 +351,7 @@ def up_and_delete_repository(id_tp, id_repositorio):
     except Exception:
         db.session.rollback()
         abort(500, description="Internal Server Error")
+
 
 if __name__ == "__main__":
     print("Starting server...")
