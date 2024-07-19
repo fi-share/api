@@ -124,7 +124,8 @@ def get_materia_cursos(id_materia):
 """
 PRE: Se espera un id valido de la tabla cursos
 
-POST: Devuelve un JSON con todos los datos de la tabla cursos con el id dado incluyendo los tps asociados
+POST: Devuelve un JSON con todos los datos de la tabla cursos y su materia asociada. 
+      Con el id dado incluyendo los tps...
 """
 
 
@@ -136,12 +137,22 @@ def get_curso_tps(id_curso):
         if curso is None:
             abort(404, description="Resource not found")
 
+        materia = Materias.query.get(curso.id_materia)
+        if materia is None:
+            abort(404, description="Resource not found")
+
         tps_data = [{'id': tp.id, 'nombre': tp.nombre, 'descripcion': tp.descripcion} for tp in curso.tps]
 
         curso_data = {
             'id': curso.id,
             'nombre': curso.nombre,
-            'tps': tps_data
+            'tps': tps_data,
+            'materia': {
+                'id': materia.id,
+                'nombre': materia.nombre,
+                'cuatrimestre': materia.cuatrimestre,
+                'anio': materia.anio
+            }
         }
         return jsonify({'curso': curso_data})
     except Exception:
