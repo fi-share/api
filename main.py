@@ -227,6 +227,11 @@ def compartir_public_repository(id_tp):
             if name not in data:
                 abort(400, description="Bad Request")
 
+        if 'id' in data:
+            repositorio_exist = Repositorios.query.get(data['id'])
+            if repositorio_exist:
+                abort(400, description="Repository already exists")
+
         nuevo_repositorio = Repositorios(
             full_name=data['full_name'],
             descripcion=data['descripcion'],
