@@ -222,11 +222,12 @@ def compartir_public_repository(id_tp):
         if tp is None:
             abort(404, description="Resource not found")
 
-        data = request.json
+        data = request.form
+        
         if not data:
             abort(400, description="Bad Request")
 
-        columns_name = ['full_name', 'descripcion', 'id_usuario']
+        columns_name = ['full_name', 'titulo', 'id_usuario', 'id']
         for name in columns_name:
             if name not in data:
                 abort(400, description="Bad Request")
@@ -237,8 +238,10 @@ def compartir_public_repository(id_tp):
                 abort(400, description="Repository already exists")
 
         nuevo_repositorio = Repositorios(
+            id=data['id'],
+            titulo=data['titulo'],
             full_name=data['full_name'],
-            descripcion=data['descripcion'],
+            descripcion=data.get('descripcion', ''),
             calificacion=data.get('calificacion', 0),
             id_usuario=data['id_usuario'],
             fecha_creacion=datetime.now(),
