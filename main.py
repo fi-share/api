@@ -181,7 +181,7 @@ def get_tp_repositorios(id_tp):
         if materia is None:
             abort(404, description="Resource not found")
 
-        repositorios_data = [{'id': repo.id, 'full_name': repo.full_name, 'descripcion': repo.descripcion,
+        repositorios_data = [{'id': repo.id, 'titulo':repo.titulo, 'full_name': repo.full_name, 'descripcion': repo.descripcion,
                               'calificacion': repo.calificacion, 'id_usuario': repo.id_usuario,
                               'fecha_creacion': repo.fecha_creacion.isoformat()} for repo in tp.repositorios]
 
@@ -253,6 +253,7 @@ def compartir_public_repository(id_tp):
 
         response_data = {
             'id': nuevo_repositorio.id,
+            'titulo': nuevo_repositorio.titulo,
             'full_name': nuevo_repositorio.full_name,
             'descripcion': nuevo_repositorio.descripcion,
             'calificacion': nuevo_repositorio.calificacion,
@@ -292,6 +293,7 @@ def up_and_delete_repository(id_tp, id_repositorio):
         if request.method == 'GET':
             response_data = {
                 'id': repositorio.id,
+                'titulo': repositorio.titulo,
                 'full_name': repositorio.full_name,
                 'descripcion': repositorio.descripcion,
                 'calificacion': repositorio.calificacion,
@@ -306,12 +308,13 @@ def up_and_delete_repository(id_tp, id_repositorio):
             if not data:
                 abort(400, description="Bad Request")
 
-            required_fields = ['full_name', 'descripcion', 'calificacion', 'id_usuario']
+            required_fields = ['titulo', 'full_name', 'descripcion', 'calificacion', 'id_usuario']
             for field in required_fields:
                 if field not in data:
                     abort(400, description=f"Missing required field: {field}")
 
             # no actualizamos fecha_creacion ni id_tp
+            repositorio.titulo = data['titulo']
             repositorio.full_name = data['full_name']
             repositorio.descripcion = data['descripcion']
             repositorio.calificacion = data['calificacion']
@@ -324,6 +327,8 @@ def up_and_delete_repository(id_tp, id_repositorio):
             if not data:
                 abort(400, description="Bad Request")
 
+            if 'titulo' in data:
+                repositorio.titulo = data['titulo']
             if 'full_name' in data:
                 repositorio.full_name = data['full_name']
             if 'descripcion' in data:
@@ -345,6 +350,7 @@ def up_and_delete_repository(id_tp, id_repositorio):
 
         response_data = {
             'id': repositorio.id,
+            'titulo': repositorio.titulo,
             'full_name': repositorio.full_name,
             'descripcion': repositorio.descripcion,
             'calificacion': repositorio.calificacion,
