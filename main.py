@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from models import db
+from models import db, Materias, Cursos, Tps, Repositorios
 from config import Config
 import requests
 
