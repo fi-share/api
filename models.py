@@ -35,9 +35,10 @@ class Tps(db.Model):
 class Repositorios(db.Model):
     __tablename__ = 'repositorios'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=False)
+    titulo = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(255), nullable=False)
-    descripcion = db.Column(db.String(255), nullable=False)
+    descripcion = db.Column(db.String(255), nullable=True)
     calificacion = db.Column(db.Integer, nullable=False)
     id_usuario = db.Column(db.String(255), nullable=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.datetime.now)
