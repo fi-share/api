@@ -27,7 +27,7 @@ class Tps(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(255), nullable=False)
-    descripcion = db.Column(db.String(255), nullable=False)
+    descripcion = db.Column(db.Text, nullable=False)
     id_curso = db.Column(db.Integer, db.ForeignKey('cursos.id'))
     repositorios = db.relationship('Repositorios')
 
