@@ -72,23 +72,13 @@ POST: Devuelve un JSON con todos los datos de la tabla materias en db
 def get_materias():
     try:
         materias = Materias.query.all()
-        materias_data = []
-        for materia in materias:
-            materia_data = {
+        materias_data = [{
                 'id': materia.id,
                 'nombre': materia.nombre,
                 'cuatrimestre': materia.cuatrimestre,
                 'anio': materia.anio,
-                'cursos': []
-            }
-            for curso in materia.cursos:
-                curso_data = {
-                    'id': curso.id,
-                    'nombre': curso.nombre,
-
-                }
-                materia_data['cursos'].append(curso_data)
-            materias_data.append(materia_data)
+            } for materia in materias]
+            
         return jsonify({'materias': materias_data})
     except Exception:
         abort(500, description="Internal Server Error")
