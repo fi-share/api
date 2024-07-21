@@ -304,21 +304,18 @@ def up_and_delete_repository(id_tp, id_repositorio):
             return jsonify(response_data), 200
 
         elif request.method == 'PUT':
-            data = request.json
+            data = request.form
             if not data:
                 abort(400, description="Bad Request")
 
-            required_fields = ['titulo', 'full_name', 'descripcion', 'calificacion', 'id_usuario']
+            required_fields = ['titulo', 'full_name', 'descripcion', 'id_usuario']
             for field in required_fields:
                 if field not in data:
                     abort(400, description=f"Missing required field: {field}")
 
             # no actualizamos fecha_creacion ni id_tp
             repositorio.titulo = data['titulo']
-            repositorio.full_name = data['full_name']
             repositorio.descripcion = data['descripcion']
-            repositorio.calificacion = data['calificacion']
-            repositorio.id_usuario = data['id_usuario']
 
             db.session.commit()
 
