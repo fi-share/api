@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, abort, request
+from flask import Flask, jsonify, abort, request, Response
 from flask_cors import CORS
 from models import db, Materias, Cursos, Tps, Repositorios
 from datetime import datetime
@@ -138,9 +138,7 @@ def get_curso_tps(id_curso):
         if curso is None:
             abort(404, description="Resource not found")
 
-        materia = Materias.query.get(curso.id_materia)
-        if materia is None:
-            abort(404, description="Resource not found")
+        materia = curso.materia
 
         tps_data = [{'id': tp.id, 'nombre': tp.nombre, 'descripcion': tp.descripcion} for tp in curso.tps]
 
@@ -167,31 +165,18 @@ POST: Devuelve un JSON con los datos del TP, curso, materia y repositorios asoci
 
 
 @app.route('/tps/<int:id_tp>', methods=['GET'])
-def get_tp_repositorios(id_tp):
+def get_tp_data(id_tp):
     try:
         tp = Tps.query.get(id_tp)
         if tp is None:
             abort(404, description="Resource not found")
 
-        curso = Cursos.query.get(tp.id_curso)
-        if curso is None:
-            abort(404, description="Resource not found")
-
-        materia = Materias.query.get(curso.id_materia)
-        if materia is None:
-            abort(404, description="Resource not found")
-
-        repositorios_data = [{'id': repo.id, 'titulo':repo.titulo, 'full_name': repo.full_name, 'descripcion': repo.descripcion,
-                              'calificacion': repo.calificacion, 'id_usuario': repo.id_usuario,
-                              'fecha_creacion': repo.fecha_creacion.isoformat()} for repo in tp.repositorios]
-
-        descripcion_html = markdown.markdown(tp.descripcion)
+        curso = tp.curso
+        materia = curso.materia
 
         tp_data = {
             'id': tp.id,
             'nombre': tp.nombre,
-            'descripcion': descripcion_html,
-            'repositorios': repositorios_data,
             'curso': {
                 'id': curso.id,
                 'nombre': curso.nombre
@@ -200,10 +185,41 @@ def get_tp_repositorios(id_tp):
                 'id': materia.id,
                 'nombre': materia.nombre,
             }
-
         }
 
         return jsonify(tp_data)
+    except Exception:
+        abort(500, description="Internal Server Error")
+
+@app.route('/tps/<int:id_tp>/descripcion_html', methods=['GET'])
+def get_tp_descripcion_html(id_tp):
+    try:
+        tp = Tps.query.get(id_tp)
+        if tp is None:
+            abort(404, description="Resource not found")
+
+        descripcion_html = markdown.markdown(tp.descripcion)
+
+        return descripcion_html
+    except Exception:
+        abort(500, description="Internal Server Error")
+
+@app.route('/tps/<int:id_tp>/repositorios', methods=['GET'])
+def get_tp_repositorios(id_tp):
+    try:
+        repositorios = Repositorios.query.filter_by(id_tp=id_tp).all()
+
+        repositorios_data = [{
+            'id': repo.id, 
+            'titulo':repo.titulo, 
+            'full_name': repo.full_name, 
+            'descripcion': repo.descripcion,
+            'calificacion': repo.calificacion, 
+            'id_usuario': repo.id_usuario,
+            'fecha_creacion': repo.fecha_creacion.isoformat()
+        } for repo in repositorios]
+        
+        return jsonify(repositorios_data)
     except Exception:
         abort(500, description="Internal Server Error")
 
