@@ -323,20 +323,12 @@ def up_and_delete_repository(id_tp, id_repositorio):
             db.session.commit()
 
         elif request.method == 'PATCH':
-            data = request.json
+            data = request.form
             if not data:
                 abort(400, description="Bad Request")
 
-            if 'titulo' in data:
-                repositorio.titulo = data['titulo']
-            if 'full_name' in data:
-                repositorio.full_name = data['full_name']
-            if 'descripcion' in data:
-                repositorio.descripcion = data['descripcion']
             if 'calificacion' in data:
                 repositorio.calificacion = data['calificacion']
-            if 'id_usuario' in data:
-                repositorio.id_usuario = data['id_usuario']
 
             db.session.commit()
 
