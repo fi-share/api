@@ -308,7 +308,7 @@ def up_and_delete_repository(id_tp, id_repositorio):
             if not data:
                 abort(400, description="Bad Request")
 
-            required_fields = ['titulo', 'full_name', 'descripcion', 'id_usuario']
+            required_fields = ['titulo', 'descripcion']
             for field in required_fields:
                 if field not in data:
                     abort(400, description=f"Missing required field: {field}")
@@ -321,11 +321,10 @@ def up_and_delete_repository(id_tp, id_repositorio):
 
         elif request.method == 'PATCH':
             data = request.form
-            if not data:
-                abort(400, description="Bad Request")
+            if 'calificacion' not in data:
+                abort(400, description="PATCH solo admite calificacion")
 
-            if 'calificacion' in data:
-                repositorio.calificacion = data['calificacion']
+            repositorio.calificacion = data['calificacion']
 
             db.session.commit()
 
