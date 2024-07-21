@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, abort, request, Response
+from flask import Flask, jsonify, abort, request
 from flask_cors import CORS
 from models import db, Materias, Cursos, Tps, Repositorios
 from datetime import datetime
@@ -16,17 +16,17 @@ db.init_app(app)
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    return jsonify(error=str(e)), 500
+    return jsonify(error=str(e)), f"500 {e.description}"
 
 
 @app.errorhandler(400)
 def bad_request(e):
-    return jsonify(error=str(e)), 400
+    return jsonify(error=str(e)), f"400 {e.description}"
 
 
 @app.errorhandler(404)
 def resource_not_found(e):
-    return jsonify(error=str(e)), 404
+    return jsonify(error=str(e)), f"404 {e.description}"
 
 
 @app.route("/")
@@ -233,26 +233,25 @@ POST: Devuelve un JSON con los datos del repositorio creado o un mensaje de erro
 @app.route('/tps/<int:id_tp>/repositorios', methods=['POST'])
 def compartir_public_repository(id_tp):
 
+    tp = Tps.query.get(id_tp)
+    if tp is None:
+        abort(404, description="Resource not found")
+
+    data = request.form
+    if not data:
+        abort(400, description="Bad Request")
+
+    columns_name = ['full_name', 'titulo', 'id_usuario', 'id']
+    for name in columns_name:
+        if name not in data:
+            abort(400, description=f"Missing required field: {naem}")
+
+    repositorio_exist = Repositorios.query.get(data['id'])
+    print(repositorio_exist)
+    if repositorio_exist:
+        abort(400, description="Repository already exists")
+
     try:
-        tp = Tps.query.get(id_tp)
-        if tp is None:
-            abort(404, description="Resource not found")
-
-        data = request.form
-        
-        if not data:
-            abort(400, description="Bad Request")
-
-        columns_name = ['full_name', 'titulo', 'id_usuario', 'id']
-        for name in columns_name:
-            if name not in data:
-                abort(400, description="Bad Request")
-
-        if 'id' in data:
-            repositorio_exist = Repositorios.query.get(data['id'])
-            if repositorio_exist:
-                abort(400, description="Repository already exists")
-
         nuevo_repositorio = Repositorios(
             id=data['id'],
             titulo=data['titulo'],
