@@ -234,7 +234,7 @@ def compartir_public_repository(id_tp):
     columns_name = ['full_name', 'titulo', 'id_usuario', 'id']
     for name in columns_name:
         if name not in data:
-            abort(400, description=f"Missing required field: {naem}")
+            abort(400, description=f"Missing required field: {name}")
 
     repositorio_exist = Repositorios.query.get(data['id'])
     print(repositorio_exist)
