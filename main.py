@@ -16,17 +16,17 @@ db.init_app(app)
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    return jsonify(error=str(e)), 500
+    return jsonify(error=str(e)), f"500 {e.description}"
 
 
 @app.errorhandler(400)
 def bad_request(e):
-    return jsonify(error=str(e)), 400
+    return jsonify(error=str(e)), f"400 {e.description}"
 
 
 @app.errorhandler(404)
 def resource_not_found(e):
-    return jsonify(error=str(e)), 404
+    return jsonify(error=str(e)), f"404 {e.description}"
 
 
 @app.route("/")
@@ -72,23 +72,13 @@ POST: Devuelve un JSON con todos los datos de la tabla materias en db
 def get_materias():
     try:
         materias = Materias.query.all()
-        materias_data = []
-        for materia in materias:
-            materia_data = {
+        materias_data = [{
                 'id': materia.id,
                 'nombre': materia.nombre,
                 'cuatrimestre': materia.cuatrimestre,
                 'anio': materia.anio,
-                'cursos': []
-            }
-            for curso in materia.cursos:
-                curso_data = {
-                    'id': curso.id,
-                    'nombre': curso.nombre,
-
-                }
-                materia_data['cursos'].append(curso_data)
-            materias_data.append(materia_data)
+            } for materia in materias]
+            
         return jsonify({'materias': materias_data})
     except Exception:
         abort(500, description="Internal Server Error")
@@ -138,9 +128,7 @@ def get_curso_tps(id_curso):
         if curso is None:
             abort(404, description="Resource not found")
 
-        materia = Materias.query.get(curso.id_materia)
-        if materia is None:
-            abort(404, description="Resource not found")
+        materia = curso.materia
 
         tps_data = [{'id': tp.id, 'nombre': tp.nombre, 'descripcion': tp.descripcion} for tp in curso.tps]
 
@@ -167,31 +155,18 @@ POST: Devuelve un JSON con los datos del TP, curso, materia y repositorios asoci
 
 
 @app.route('/tps/<int:id_tp>', methods=['GET'])
-def get_tp_repositorios(id_tp):
+def get_tp_data(id_tp):
     try:
         tp = Tps.query.get(id_tp)
         if tp is None:
             abort(404, description="Resource not found")
 
-        curso = Cursos.query.get(tp.id_curso)
-        if curso is None:
-            abort(404, description="Resource not found")
-
-        materia = Materias.query.get(curso.id_materia)
-        if materia is None:
-            abort(404, description="Resource not found")
-
-        repositorios_data = [{'id': repo.id, 'titulo':repo.titulo, 'full_name': repo.full_name, 'descripcion': repo.descripcion,
-                              'calificacion': repo.calificacion, 'id_usuario': repo.id_usuario,
-                              'fecha_creacion': repo.fecha_creacion.isoformat()} for repo in tp.repositorios]
-
-        descripcion_html = markdown.markdown(tp.descripcion)
+        curso = tp.curso
+        materia = curso.materia
 
         tp_data = {
             'id': tp.id,
             'nombre': tp.nombre,
-            'descripcion': descripcion_html,
-            'repositorios': repositorios_data,
             'curso': {
                 'id': curso.id,
                 'nombre': curso.nombre
@@ -200,10 +175,41 @@ def get_tp_repositorios(id_tp):
                 'id': materia.id,
                 'nombre': materia.nombre,
             }
-
         }
 
         return jsonify(tp_data)
+    except Exception:
+        abort(500, description="Internal Server Error")
+
+@app.route('/tps/<int:id_tp>/descripcion_html', methods=['GET'])
+def get_tp_descripcion_html(id_tp):
+    try:
+        tp = Tps.query.get(id_tp)
+        if tp is None:
+            abort(404, description="Resource not found")
+
+        descripcion_html = markdown.markdown(tp.descripcion)
+
+        return descripcion_html
+    except Exception:
+        abort(500, description="Internal Server Error")
+
+@app.route('/tps/<int:id_tp>/repositorios', methods=['GET'])
+def get_tp_repositorios(id_tp):
+    try:
+        repositorios = Repositorios.query.filter_by(id_tp=id_tp).all()
+
+        repositorios_data = [{
+            'id': repo.id, 
+            'titulo':repo.titulo, 
+            'full_name': repo.full_name, 
+            'descripcion': repo.descripcion,
+            'calificacion': repo.calificacion, 
+            'id_usuario': repo.id_usuario,
+            'fecha_creacion': repo.fecha_creacion.isoformat()
+        } for repo in repositorios]
+        
+        return jsonify(repositorios_data)
     except Exception:
         abort(500, description="Internal Server Error")
 
@@ -217,26 +223,25 @@ POST: Devuelve un JSON con los datos del repositorio creado o un mensaje de erro
 @app.route('/tps/<int:id_tp>/repositorios', methods=['POST'])
 def compartir_public_repository(id_tp):
 
+    tp = Tps.query.get(id_tp)
+    if tp is None:
+        abort(404, description="Resource not found")
+
+    data = request.form
+    if not data:
+        abort(400, description="Bad Request")
+
+    columns_name = ['full_name', 'titulo', 'id_usuario', 'id']
+    for name in columns_name:
+        if name not in data:
+            abort(400, description=f"Missing required field: {naem}")
+
+    repositorio_exist = Repositorios.query.get(data['id'])
+    print(repositorio_exist)
+    if repositorio_exist:
+        abort(400, description="Repository already exists")
+
     try:
-        tp = Tps.query.get(id_tp)
-        if tp is None:
-            abort(404, description="Resource not found")
-
-        data = request.form
-        
-        if not data:
-            abort(400, description="Bad Request")
-
-        columns_name = ['full_name', 'titulo', 'id_usuario', 'id']
-        for name in columns_name:
-            if name not in data:
-                abort(400, description="Bad Request")
-
-        if 'id' in data:
-            repositorio_exist = Repositorios.query.get(data['id'])
-            if repositorio_exist:
-                abort(400, description="Repository already exists")
-
         nuevo_repositorio = Repositorios(
             id=data['id'],
             titulo=data['titulo'],
@@ -304,39 +309,27 @@ def up_and_delete_repository(id_tp, id_repositorio):
             return jsonify(response_data), 200
 
         elif request.method == 'PUT':
-            data = request.json
+            data = request.form
             if not data:
                 abort(400, description="Bad Request")
 
-            required_fields = ['titulo', 'full_name', 'descripcion', 'calificacion', 'id_usuario']
+            required_fields = ['titulo', 'descripcion']
             for field in required_fields:
                 if field not in data:
                     abort(400, description=f"Missing required field: {field}")
 
             # no actualizamos fecha_creacion ni id_tp
             repositorio.titulo = data['titulo']
-            repositorio.full_name = data['full_name']
             repositorio.descripcion = data['descripcion']
-            repositorio.calificacion = data['calificacion']
-            repositorio.id_usuario = data['id_usuario']
 
             db.session.commit()
 
         elif request.method == 'PATCH':
-            data = request.json
-            if not data:
-                abort(400, description="Bad Request")
+            data = request.form
+            if 'calificacion' not in data:
+                abort(400, description="PATCH solo admite calificacion")
 
-            if 'titulo' in data:
-                repositorio.titulo = data['titulo']
-            if 'full_name' in data:
-                repositorio.full_name = data['full_name']
-            if 'descripcion' in data:
-                repositorio.descripcion = data['descripcion']
-            if 'calificacion' in data:
-                repositorio.calificacion = data['calificacion']
-            if 'id_usuario' in data:
-                repositorio.id_usuario = data['id_usuario']
+            repositorio.calificacion = data['calificacion']
 
             db.session.commit()
 
