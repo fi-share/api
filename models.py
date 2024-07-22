@@ -10,7 +10,7 @@ class Materias(db.Model):
     nombre = db.Column(db.String(255), nullable=False)
     cuatrimestre = db.Column(db.Integer, nullable=False)
     anio = db.Column(db.Integer, nullable=False)
-    cursos = db.relationship('Cursos')
+    cursos = db.relationship('Cursos', backref='materia')
 
 
 class Cursos(db.Model):
@@ -19,7 +19,7 @@ class Cursos(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(255), nullable=False)
     id_materia = db.Column(db.Integer, db.ForeignKey('materias.id'))
-    tps = db.relationship('Tps')
+    tps = db.relationship('Tps', backref='curso')
 
 
 class Tps(db.Model):
@@ -29,7 +29,7 @@ class Tps(db.Model):
     nombre = db.Column(db.String(255), nullable=False)
     descripcion = db.Column(db.Text, nullable=False)
     id_curso = db.Column(db.Integer, db.ForeignKey('cursos.id'))
-    repositorios = db.relationship('Repositorios')
+    repositorios = db.relationship('Repositorios', backref='tp')
 
 
 class Repositorios(db.Model):
