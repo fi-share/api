@@ -128,22 +128,22 @@ def get_curso_tps(id_curso):
         if curso is None:
             abort(404, description="Resource not found")
 
-        materia = curso.materia
-
         tps_data = [{'id': tp.id, 'nombre': tp.nombre, 'descripcion': tp.descripcion} for tp in curso.tps]
 
         curso_data = {
             'id': curso.id,
             'nombre': curso.nombre,
             'tps': tps_data,
-            'materia': {
-                'id': materia.id,
-                'nombre': materia.nombre,
-                'cuatrimestre': materia.cuatrimestre,
-                'anio': materia.anio
-            }
         }
-        return jsonify({'curso': curso_data})
+
+        materia = curso.materia
+        materia_data = {
+            'id': materia.id,
+            'nombre': materia.nombre,
+            'cuatrimestre': materia.cuatrimestre,
+            'anio': materia.anio
+        }
+        return jsonify({'curso': curso_data, 'materia': materia_data})
     except Exception:
         abort(500, description="Internal Server Error")
 
@@ -161,23 +161,26 @@ def get_tp_data(id_tp):
         if tp is None:
             abort(404, description="Resource not found")
 
-        curso = tp.curso
-        materia = curso.materia
-
         tp_data = {
             'id': tp.id,
             'nombre': tp.nombre,
-            'curso': {
-                'id': curso.id,
-                'nombre': curso.nombre
-            },
-            'materia': {
-                'id': materia.id,
-                'nombre': materia.nombre,
-            }
         }
 
-        return jsonify(tp_data)
+        curso = tp.curso
+        curso_data = {
+            'id': curso.id,
+            'nombre': curso.nombre
+        }
+        
+        materia = curso.materia
+        materia_data = {
+            'id': materia.id,
+            'nombre': materia.nombre,
+            'cuatrimestre': materia.cuatrimestre,
+            'anio': materia.anio
+        }
+
+        return jsonify({'tp': tp_data, 'curso': curso_data, 'materia': materia_data})
     except Exception:
         abort(500, description="Internal Server Error")
 
