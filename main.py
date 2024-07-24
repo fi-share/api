@@ -366,5 +366,5 @@ if __name__ == "__main__":
     print("Starting server...")
     with app.app_context():
         db.create_all()  # Considerar Flask Migrate para produccion
-    app.run(debug=True)
+    app.run()
     print("Started")
