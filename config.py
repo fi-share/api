@@ -17,5 +17,5 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    GITHUB_CLIENT_ID = "Ov23li0fsg8Uodd5Qy1d"
+    GITHUB_CLIENT_ID = os.environ["GITHUB_CLIENT_ID"]
     GITHUB_CLIENT_SECRET = os.environ["GITHUB_CLIENT_SECRET"]
